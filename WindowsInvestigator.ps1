@@ -9,26 +9,17 @@ function CheckCommandExists
     {
         Write-Host -Object ("Checking command " + $CommandsUsed[$i])
 
-        #try 
-        #{
-            $CmdTestResult = (Get-Command -Name $CommandsUsed[$i] -ErrorAction SilentlyContinue)
-            if ($CmdTestResult)
-            {
-                $CommandExists[$CommandsUsed[$i]] = 1
-                Write-Host -Object ("Command " + $CommandsUsed[$i] + " exists!")
-            }
-            else 
-            {
-                $CommandExists[$CommandsUsed[$i]] = 0
-                Write-Host -Object ("Command " + $CommandsUsed[$i] + " does not exist!")
-            }
-            
-        
-        #}
-        #catch 
-        #{
-        #    Write-Host -Object ("Error encountered: " + $Error)
-        #} 
+        $CmdTestResult = (Get-Command -Name $CommandsUsed[$i] -ErrorAction SilentlyContinue)
+        if ($CmdTestResult)
+        {
+            $CommandExists[$CommandsUsed[$i]] = 1
+            Write-Host -Object ("Command " + $CommandsUsed[$i] + " exists!")
+        }
+        else 
+        {
+            $CommandExists[$CommandsUsed[$i]] = 0
+            Write-Host -Object ("Command " + $CommandsUsed[$i] + " does not exist!")
+        }
     }
 
     Write-Host -Object $CommandExists
