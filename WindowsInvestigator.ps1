@@ -143,12 +143,11 @@ function RetrieveHotFixes()
 
 function RetrieveEnvVariables()
 {
-    $EnvVarList = @('USERNAME', 'USERPROFILE') #, 'Path')
-    $EnvVarHT = @{'USERNAME' = "" ; 'USERPROFILE' = ""} # ; 'Path' = ""}
+    $EnvVarList = @('USERNAME', 'USERPROFILE')
+    $EnvVarHT = @{'USERNAME' = "" ; 'USERPROFILE' = ""}
 
     $EnvVarHT['USERNAME'] = $Env:USERNAME
     $EnvVarHT['USERPROFILE'] = $Env:USERPROFILE
-    #$EnvVarHT['Path'] = $Env:Path
 
     if ($EnvVarHT.Values)
     {
@@ -190,11 +189,88 @@ function RetrieveEnvVariables()
         {
             Write-Host -Object $PathDir
         }
+
+        Write-Host -Object ""
     }
     else 
     {
         Write-Host -Object ""
         Write-Host -Object "[-] Could not retrieve Path directories!"
+        Write-Host -Object ""
+    }
+}
+
+function RetrieveUserGroupInfo()
+{
+    $UserCmdTest = CheckCommandExists -Command Get-LocalUser
+
+    if ($UserCmdTest)
+    {
+        Write-Host -Object ""
+        Write-Host -Object "[+] Retrieving list of users..."
+        Write-Host -Object ""
+
+        Get-LocalUser | Select-Object Name, Enabled, LastLogon, AccountExpires, PasswordRequired, PasswordLastSet, PasswordExpires | Format-Table
+    }
+    else 
+    {
+        Write-Host -Object ""
+        Write-Host -Object "[-] Command Get-LocalUser not available!"
+        Write-Host -Object "[-] Skipping retrieve users info section..."
+        Write-Host -Object ""
+    }
+
+    $GroupCmdTest = CheckCommandExists -Command Get-LocalGroup
+
+    if ($GroupCmdTest)
+    {
+        Write-Host -Object ""
+        Write-Host -Object "[+] Retrieving list of groups..."
+        Write-Host -Object ""
+
+        Get-LocalGroup | Select-Object Name, ObjectClass, PrincipalSource, SID | Format-Table
+    }
+    else
+    {
+        Write-Host -Object ""
+        Write-Host -Object "[-] Command Get-LocalGroup not available!"
+        Write-Host -Object "[-] Skipping retrieve groups info section..."
+        Write-Host -Object ""
+    }
+
+    $GroupMemberCmdTest = CheckCommandExists -Command Get-LocalGroupMember
+
+    if ($GroupMemberCmdTest)
+    {
+        Write-Host -Object ""
+        Write-Host -Object "[+] Retrieving list of groups where current user is member..."
+        Write-Host -Object ""
+
+        $GroupList = Get-LocalGroup
+
+        foreach ($Group in $GroupList)
+        {
+            if (Get-LocalGroupMember -Name $Group -Member $Env:USERNAME -ErrorAction SilentlyContinue)
+            {
+                Write-Host -Object $Group -ForegroundColor 'Green'
+            }
+        }
+
+        Write-Host -Object ""
+
+        Write-Host -Object ""
+        Write-Host -Object "[+] Retrieving list of members for Administrator group..."
+        Write-Host -Object ""
+
+        $AdminGroup = 'Administrators'
+        Get-LocalGroupMember -Group $AdminGroup -ErrorAction SilentlyContinue | Select-Object ObjectClass, Name, PrincipalSource, SID | Format-Table
+        Write-Host -Object ""
+    }
+    else
+    {
+        Write-Host -Object ""
+        Write-Host -Object "[-] Command Get-LocalGroupMember not available!"
+        Write-Host -Object "[-] Skipping retrieve groups where current user is member info section..."
         Write-Host -Object ""
     }
 }
@@ -210,6 +286,9 @@ function RunMain()
     ShowSection -Message "Start Environment Variable Section" -Color 'Blue'
     RetrieveEnvVariables
     ShowSection -Message "End Environment Variable Section" -Color 'Blue'
+    ShowSection -Message "Start Users & Groups Section" -Color 'Blue'
+    RetrieveUserGroupInfo
+    ShowSection -Message "End Users & Groups Section" -Color 'Blue'
 }
 
 RunMain
