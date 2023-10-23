@@ -273,6 +273,118 @@ function RetrieveUserGroupInfo()
         Write-Host -Object "[-] Skipping retrieve groups where current user is member info section..."
         Write-Host -Object ""
     }
+
+    $WhoAmICmdTest = CheckCommandExists -Command whoami
+
+    if ($WhoAmICmdTest)
+    {
+        Write-Host -Object ""
+        Write-Host -Object "[+] Retrieving list of privileges for current user..."
+        Write-Host -Object ""
+
+        whoami /priv
+
+        Write-Host -Object ""
+    }
+    else
+    {
+        Write-Host -Object ""
+        Write-Host -Object "[-] Command whoami not available!"
+        Write-Host -Object "[-] Skipping retrieve privileges for current user info section..."
+        Write-Host -Object ""
+    }
+}
+
+function RetrieveProcesses()
+{
+    $GetProcessCmd = CheckCommandExists -Command Get-Process
+
+    if ($GetProcessCmd)
+    {
+        Write-Host -Object ""
+        Write-Host -Object "[+] Retrieving list of running processes..."
+        Write-Host -Object ""
+
+        Get-Process | Select-Object Id, Name, Path | Format-Table
+
+        Write-Host -Object ""
+    }
+    else 
+    {
+        Write-Host -Object ""
+        Write-Host -Object "[-] Command Get-Process not available!"
+        Write-Host -Object "[-] Skipping retrieve list of running processes info section..."
+        Write-Host -Object ""
+    }
+}
+
+function RetrieveServices()
+{
+    $GetServiceCmd = CheckCommandExists -Command Get-Service
+
+    if ($GetServiceCmd)
+    {
+        Write-Host -Object ""
+        Write-Host -Object "[+] Retrieving list of running services..."
+        Write-Host -Object ""
+
+        Get-Service | Where-Object { $_.Status -eq 'Running' } | Select-Object Name, DisplayName, Status, StartType, CanStop | Format-Table
+
+        Write-Host -Object ""
+    }
+    else
+    {
+        Write-Host -Object ""
+        Write-Host -Object "[-] Command Get-Service not available!"
+        Write-Host -Object "[-] Skipping retrieve list of running services info section..."
+        Write-Host -Object ""
+    }
+}
+
+function RetrieveShares()
+{
+    $GetSharesCmd = CheckCommandExists -Command Get-SmbShare
+
+    if ($GetSharesCmd)
+    {
+        Write-Host -Object ""
+        Write-Host -Object "[+] Retrieving list of shares..."
+        Write-Host -Object ""
+
+        Get-SmbShare | Select-Object Name, ScopeName, Path, Description, CurrentUsers | Format-Table
+
+        Write-Host -Object ""
+    }
+    else
+    {
+        Write-Host -Object ""
+        Write-Host -Object "[-] Command Get-SmbShare not available!"
+        Write-Host -Object "[-] Skipping retrieve list of shares info section..."
+        Write-Host -Object ""
+    }
+}
+
+function RetrieveSoftware()
+{
+    $CheckSoftwareCmd = CheckCommandExists -Command Get-WmiObject
+
+    if ($CheckSoftwareCmd)
+    {
+        Write-Host -Object ""
+        Write-Host -Object "[+] Retrieving list of software..."
+        Write-Host -Object ""
+
+        Get-WmiObject -Class Win32_Product | Select-Object Name, Version, InstallDate, InstallLocation, Vendor | Format-Table
+
+        Write-Host -Object ""
+    }
+    else
+    {
+        Write-Host -Object ""
+        Write-Host -Object "[-] Command Get-WmiObject not available!"
+        Write-Host -Object "[-] Skipping retrieve list of software info section..."
+        Write-Host -Object ""
+    }
 }
 
 function RunMain()
@@ -289,6 +401,18 @@ function RunMain()
     ShowSection -Message "Start Users & Groups Section" -Color 'Blue'
     RetrieveUserGroupInfo
     ShowSection -Message "End Users & Groups Section" -Color 'Blue'
+    ShowSection -Message "Start Processes Section" -Color 'Blue'
+    RetrieveProcesses
+    ShowSection -Message "End Processes Section" -Color 'Blue'
+    ShowSection -Message "Start Services Section" -Color 'Blue'
+    RetrieveServices
+    ShowSection -Message "End Services Section" -Color 'Blue'
+    ShowSection -Message "Start Shares Section" -Color 'Blue'
+    RetrieveShares
+    ShowSection -Message "End Shares Section" -Color 'Blue'
+    ShowSection -Message "Start Software Section" -Color 'Blue'
+    RetrieveSoftware
+    ShowSection -Message "End Software Section" -Color 'Blue'
 }
 
 RunMain
