@@ -66,22 +66,33 @@ function PrintTableRow([Int32]$MaxLengthProperty, [Int32]$MaxLengthValue, [strin
     Write-Host -Object $ValueLine -ForegroundColor $RowColor    
 }
 
+function ShowStepInfo([array]$Msg, [string]$Color)
+{
+    if ($Msg)
+    {
+        foreach ($item in $Msg)
+        {
+            Write-Host -Object $item -ForegroundColor $Color
+        }
+    }
+}
+
+<#
 function PrintTableHeader([Int32]$MaxLengthProperty, [Int32]$MaxLengthValue, [string]$Property, [string]$Value, [string]$BorderColor, [string]$RowColor)
 {
     PrintTableBorder -MaxLengthProperty $MaxLengthProperty -MaxLengthValue $MaxLengthValue -Color $BorderColor
     PrintTableRow -MaxLengthProperty $MaxLengthProperty -MaxLengthValue $MaxLengthValue -Property $Property -Value $Value -Color $RowColor
     PrintTableBorder -MaxLengthProperty $MaxLengthProperty -MaxLengthValue $MaxLengthValue -Color $BorderColor
 }
-
+#>
 function RetrieveComputerInfo()
 {
     $ComputerInfoCmdTest = CheckCommandExists -Command Get-ComputerInfo
     
     if ($ComputerInfoCmdTest)
     {
-        Write-Host -Object ""
-        Write-Host -Object "[+] Retrieving computer info..."
-        Write-Host -Object ""
+        $Msg = @("", "[+] Retrieving computer info...", "")
+        ShowStepInfo -Msg $Msg -Color 'Green'
 
         $ComputerInfoData = Get-ComputerInfo
         $PropertyList = @('OsName', 'OsVersion', 'OsBuildNumber', 'OsSystemDrive', 'OsWindowsDirectory', 'OsSystemDirectory', 
@@ -100,23 +111,22 @@ function RetrieveComputerInfo()
         $MaxKeyLength = ($PropertyHT.Keys | Measure-Object -Maximum -Property Length).Maximum
         $MaxValueLength = ($PropertyHT.Values | Measure-Object -Maximum -Property Length).Maximum
 
-        PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'Yellow'
-        PrintTableRow -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -Property 'Property' -Value 'Value' -RowColor 'Yellow'
-        PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'Yellow'
+        PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'DarkYellow'
+        PrintTableRow -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -Property 'Property' -Value 'Value' -RowColor 'DarkYellow'
+        PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'DarkYellow'
 
         foreach ($property in $PropertyList)
         {
-            PrintTableRow -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -Property $property -Value $PropertyHT[$property] -RowColor 'Green'
-            PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'Green'
+            PrintTableRow -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -Property $property -Value $PropertyHT[$property] -RowColor 'Yellow'
+            PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'Yellow'
         }
-        Write-Host -Object ""
+
+        ShowStepInfo -Msg " " -Color 'Green'
     }
     else 
     {
-        Write-Host -Object ""
-        Write-Host -Object "[-] Command Get-ComputerInfo not available!"
-        Write-Host -Object "[-] Skipping retrieve computer info section..."
-        Write-Host -Object ""
+        $Msg = @("", "[-] Command Get-ComputerInfo not available!", "[-] Skipping retrieve computer info section...", "")
+        ShowStepInfo -Msg $Msg -Color 'Red'
     }
 }
 
@@ -126,18 +136,15 @@ function RetrieveHotFixes()
 
     if ($HotFixCmdTest)
     {
-        Write-Host -Object ""
-        Write-Host -Object "[+] Retrieving HotFix info..."
-        Write-Host -Object ""
+        $Msg = @("", "[+] Retrieving HotFix info...", "")
+        ShowStepInfo -Msg $Msg -Color 'Green'
 
         Get-HotFix | Select-Object Description, HotFixID, InstalledBy, InstalledOn, CsName | Sort-Object -Property InstalledOn -Descending | Format-Table
     }
     else 
     {
-        Write-Host -Object ""
-        Write-Host -Object "[-] Command Get-HotFix not available!"
-        Write-Host -Object "[-] Skipping retrieve HotFix section..."
-        Write-Host -Object ""
+        $Msg = @("", "[-] Command Get-HotFix not available!", "[-] Skipping retrieve HotFix section...", "")
+        ShowStepInfo -Msg $Msg -Color 'Red'
     }
 }
 
@@ -149,54 +156,59 @@ function RetrieveEnvVariables()
     $EnvVarHT['USERNAME'] = $Env:USERNAME
     $EnvVarHT['USERPROFILE'] = $Env:USERPROFILE
 
-    if ($EnvVarHT.Values)
+    $EnvVarBool = $false
+
+    foreach ($value_val in $EnvVarHT.Values)
     {
-        Write-Host -Object ""
-        Write-Host -Object "[+] Retrieving environment variables..."
-        Write-Host -Object ""
+        if($value_val)
+        {
+            $EnvVarBool = $true
+            break
+        }
+    }
+
+    if ($EnvVarBool)
+    {
+        $Msg = @("", "[+] Retrieving USERNAME and USERPROFILE environment variables...", "")
+        ShowStepInfo -Msg $Msg -Color 'Green'
 
         $MaxKeyLength = ($EnvVarHT.Keys | Measure-Object -Maximum -Property Length).Maximum
         $MaxValueLength = ($EnvVarHT.Values | Measure-Object -Maximum -Property Length).Maximum
 
-        PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'Yellow'
-        PrintTableRow -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -Property 'Property' -Value 'Value' -RowColor 'Yellow'
-        PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'Yellow'
+        PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'DarkYellow'
+        PrintTableRow -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -Property 'Property' -Value 'Value' -RowColor 'DarkYellow'
+        PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'DarkYellow'
 
         foreach ($EnvVar in $EnvVarList)
         {
-            PrintTableRow -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -Property $EnvVar -Value $EnvVarHT[$EnvVar] -RowColor 'Green'
-            PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'Green'
+            PrintTableRow -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -Property $EnvVar -Value $EnvVarHT[$EnvVar] -RowColor 'Yellow'
+            PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'Yellow'
         }
     }
     else 
     {
-        Write-Host -Object ""
-        Write-Host -Object "[-] Could not retrieve environment variables!"
-        Write-Host -Object ""
+        $Msg = @("", "[-] Could not retrieve USERNAME, USERPROFILE environment variables!")
+        ShowStepInfo -Msg $Msg -Color 'Red'
     }
 
-    $PathDirList = $Env:Path.Split(';')
+    $PathDirList = $Env:Path
     
     if ($PathDirList)
     {
-        Write-Host -Object ""
-        Write-Host -Object "[+] Retrieving Directories in PATH..."
-        Write-Host -Object ""
-        Write-Host -Object "Path Directories"
-        Write-Host -Object "----------------"
+        $Msg = @("", "[+] Retrieving Directories in PATH...", "", "Path Directories", "----------------")
+        ShowStepInfo -Msg $Msg -Color 'Green'
 
-        foreach ($PathDir in $PathDirList)
+        foreach ($PathDir in $PathDirList.Split(';'))
         {
             Write-Host -Object $PathDir
         }
 
-        Write-Host -Object ""
+        ShowStepInfo -Msg " " -Color 'Green'
     }
     else 
     {
-        Write-Host -Object ""
-        Write-Host -Object "[-] Could not retrieve Path directories!"
-        Write-Host -Object ""
+        $Msg = @("", "[-] Could not retrieve Path directories!", "")
+        ShowStepInfo -Msg $Msg -Color 'Red'
     }
 }
 
@@ -206,45 +218,38 @@ function RetrieveUserGroupInfo()
 
     if ($UserCmdTest)
     {
-        Write-Host -Object ""
-        Write-Host -Object "[+] Retrieving list of users..."
-        Write-Host -Object ""
+        $Msg = @("", "[+] Retrieving list of users...")
+        ShowStepInfo -Msg $Msg -Color 'Green'
 
         Get-LocalUser | Select-Object Name, Enabled, LastLogon, AccountExpires, PasswordRequired, PasswordLastSet, PasswordExpires | Format-Table
     }
     else 
     {
-        Write-Host -Object ""
-        Write-Host -Object "[-] Command Get-LocalUser not available!"
-        Write-Host -Object "[-] Skipping retrieve users info section..."
-        Write-Host -Object ""
+        $Msg = @("", "[-] Command Get-LocalUser not available!", "[-] Skipping retrieve users info section...", "")
+        ShowStepInfo -Msg $Msg -Color 'Red'
     }
 
     $GroupCmdTest = CheckCommandExists -Command Get-LocalGroup
 
     if ($GroupCmdTest)
     {
-        Write-Host -Object ""
-        Write-Host -Object "[+] Retrieving list of groups..."
-        Write-Host -Object ""
+        $Msg = @("[+] Retrieving list of groups...")
+        ShowStepInfo -Msg $Msg -Color 'Green'
 
         Get-LocalGroup | Select-Object Name, ObjectClass, PrincipalSource, SID | Format-Table
     }
     else
     {
-        Write-Host -Object ""
-        Write-Host -Object "[-] Command Get-LocalGroup not available!"
-        Write-Host -Object "[-] Skipping retrieve groups info section..."
-        Write-Host -Object ""
+        $Msg = @("[-] Command Get-LocalGroup not available!", "[-] Skipping retrieve groups info section...", "")
+        ShowStepInfo -Msg $Msg -Color 'Red'
     }
 
     $GroupMemberCmdTest = CheckCommandExists -Command Get-LocalGroupMember
 
     if ($GroupMemberCmdTest)
     {
-        Write-Host -Object ""
-        Write-Host -Object "[+] Retrieving list of groups where current user is member..."
-        Write-Host -Object ""
+        $Msg = @("[+] Retrieving list of groups where current user is member...", "")
+        ShowStepInfo -Msg $Msg -Color 'Green'
 
         $GroupList = Get-LocalGroup
 
@@ -252,46 +257,37 @@ function RetrieveUserGroupInfo()
         {
             if (Get-LocalGroupMember -Name $Group -Member $Env:USERNAME -ErrorAction SilentlyContinue)
             {
-                Write-Host -Object $Group -ForegroundColor 'Green'
+                Write-Host -Object $Group -ForegroundColor 'Yellow'
             }
         }
 
-        Write-Host -Object ""
-
-        Write-Host -Object ""
-        Write-Host -Object "[+] Retrieving list of members for Administrator group..."
-        Write-Host -Object ""
+        $Msg = @("", "[+] Retrieving list of members for Administrator group...")
+        ShowStepInfo -Msg $Msg -Color 'Green'
 
         $AdminGroup = 'Administrators'
         Get-LocalGroupMember -Group $AdminGroup -ErrorAction SilentlyContinue | Select-Object ObjectClass, Name, PrincipalSource, SID | Format-Table
-        Write-Host -Object ""
     }
     else
     {
-        Write-Host -Object ""
-        Write-Host -Object "[-] Command Get-LocalGroupMember not available!"
-        Write-Host -Object "[-] Skipping retrieve groups where current user is member info section..."
-        Write-Host -Object ""
+        $Msg = @("[-] Command Get-LocalGroupMember not available!", "[-] Skipping retrieve groups where current user is member info section...", "")
+        ShowStepInfo -Msg $Msg -Color 'Red'
     }
 
     $WhoAmICmdTest = CheckCommandExists -Command whoami
 
     if ($WhoAmICmdTest)
     {
-        Write-Host -Object ""
-        Write-Host -Object "[+] Retrieving list of privileges for current user..."
-        Write-Host -Object ""
+        $Msg = @("[+] Retrieving list of privileges for current user...")
+        ShowStepInfo -Msg $Msg -Color 'Green'
 
         whoami /priv
 
-        Write-Host -Object ""
+        ShowStepInfo -Msg " " -Color 'Green'
     }
     else
     {
-        Write-Host -Object ""
-        Write-Host -Object "[-] Command whoami not available!"
-        Write-Host -Object "[-] Skipping retrieve privileges for current user info section..."
-        Write-Host -Object ""
+        $Msg = @("[-] Command whoami not available!", "[-] Skipping retrieve privileges for current user info section...", "")
+        ShowStepInfo -Msg $Msg -Color 'Red'
     }
 }
 
@@ -301,20 +297,15 @@ function RetrieveProcesses()
 
     if ($GetProcessCmd)
     {
-        Write-Host -Object ""
-        Write-Host -Object "[+] Retrieving list of running processes..."
-        Write-Host -Object ""
+        $Msg = @("", "[+] Retrieving list of running processes...")
+        ShowStepInfo -Msg $Msg -Color 'Green'
 
         Get-Process | Select-Object Id, Name, Path | Format-Table
-
-        Write-Host -Object ""
     }
     else 
     {
-        Write-Host -Object ""
-        Write-Host -Object "[-] Command Get-Process not available!"
-        Write-Host -Object "[-] Skipping retrieve list of running processes info section..."
-        Write-Host -Object ""
+        $Msg = @("", "[-] Command Get-Process not available!", "[-] Skipping retrieve list of running processes info section...", "")
+        ShowStepInfo -Msg $Msg -Color 'Red'
     }
 }
 
@@ -324,20 +315,15 @@ function RetrieveServices()
 
     if ($GetServiceCmd)
     {
-        Write-Host -Object ""
-        Write-Host -Object "[+] Retrieving list of running services..."
-        Write-Host -Object ""
+        $Msg = @("", "[+] Retrieving list of running services...")
+        ShowStepInfo -Msg $Msg -Color 'Green'
 
         Get-Service | Where-Object { $_.Status -eq 'Running' } | Select-Object Name, DisplayName, Status, StartType, CanStop | Format-Table
-
-        Write-Host -Object ""
     }
     else
     {
-        Write-Host -Object ""
-        Write-Host -Object "[-] Command Get-Service not available!"
-        Write-Host -Object "[-] Skipping retrieve list of running services info section..."
-        Write-Host -Object ""
+        $Msg = @("", "[-] Command Get-Service not available!", "[-] Skipping retrieve list of running services info section...", "")
+        ShowStepInfo -Msg $Msg -Color 'Red'
     }
 }
 
@@ -347,20 +333,15 @@ function RetrieveShares()
 
     if ($GetSharesCmd)
     {
-        Write-Host -Object ""
-        Write-Host -Object "[+] Retrieving list of shares..."
-        Write-Host -Object ""
+        $Msg = @("", "[+] Retrieving list of shares...")
+        ShowStepInfo -Msg $Msg -Color 'Green'
 
         Get-SmbShare | Select-Object Name, ScopeName, Path, Description, CurrentUsers | Format-Table
-
-        Write-Host -Object ""
     }
     else
     {
-        Write-Host -Object ""
-        Write-Host -Object "[-] Command Get-SmbShare not available!"
-        Write-Host -Object "[-] Skipping retrieve list of shares info section..."
-        Write-Host -Object ""
+        $Msg = @("", "[-] Command Get-SmbShare not available!", "[-] Skipping retrieve list of shares info section...", "")
+        ShowStepInfo -Msg $Msg -Color 'Red'
     }
 }
 
@@ -370,49 +351,137 @@ function RetrieveSoftware()
 
     if ($CheckSoftwareCmd)
     {
-        Write-Host -Object ""
-        Write-Host -Object "[+] Retrieving list of software..."
-        Write-Host -Object ""
+        $Msg = @("", "[+] Retrieving list of software...")
+        ShowStepInfo -Msg $Msg -Color 'Green'
+
+        #Write-Host -Object ""
+        #Write-Host -Object "[+] Retrieving list of software..."
+        #Write-Host -Object ""
 
         Get-WmiObject -Class Win32_Product | Select-Object Name, Version, InstallDate, InstallLocation, Vendor | Format-Table
-
-        Write-Host -Object ""
     }
     else
     {
-        Write-Host -Object ""
-        Write-Host -Object "[-] Command Get-WmiObject not available!"
-        Write-Host -Object "[-] Skipping retrieve list of software info section..."
-        Write-Host -Object ""
+        $Msg = @("", "[-] Command Get-WmiObject not available!", "[-] Skipping retrieve list of software info section...", "")
+        ShowStepInfo -Msg $Msg -Color 'Red'
+
+        #Write-Host -Object ""
+        #Write-Host -Object "[-] Command Get-WmiObject not available!"
+        #Write-Host -Object "[-] Skipping retrieve list of software info section..."
+        #Write-Host -Object ""
     }
+}
+
+function RetrieveScheduledTasks()
+{
+    $CheckScheduledTasksCmd = CheckCommandExists -Command Get-ScheduledTask
+
+    if ($CheckScheduledTasksCmd)
+    {
+        $Msg = @("", "[+] Retrieving list of available scheduled tasks...", "[+] Excluded the tasks from Microsoft Path")
+        ShowStepInfo -Msg $Msg -Color 'Green'
+
+        Get-ScheduledTask | Where-Object { $_.TaskPath -notlike '*Microsoft*' } | Select-Object TaskName, TaskPath, State | Format-Table
+    }
+    else
+    {
+        $Msg = @("", "[-] Command Get-ScheduledTask not available!", "[-] Skipping retrieve list of available scheduled tasks...", "")
+        ShowStepInfo -Msg $Msg -Color 'Red'
+    }
+}
+
+function RetrieveAntiVirus()
+{
+    $CheckServiceCmd = CheckCommandExists -Command Get-Service
+
+    if ($CheckServiceCmd)
+    {
+        $Msg = @("", "[+] Retrieving status for Microsoft Defender...")
+        ShowStepInfo -Msg $Msg -Color 'Green'
+
+        Get-Service -Name WinDefend | Select-Object Status, Name, DisplayName | Format-Table
+    }
+    else
+    {
+        $Msg = @("", "[-] Command Get-Service not available!", "[-] Skipping retrieve status for Microsoft Defender...")
+        ShowStepInfo -Msg $Msg -Color 'Red'
+    }
+
+    $CheckAMCmd = CheckCommandExists -Command Get-MpComputerStatus
+
+    if ($CheckAMCmd)
+    {
+        $Msg = @("", "[+] Retrieving status for antimalware software...")
+        ShowStepInfo -Msg $Msg -Color 'Green'
+
+        Get-MpComputerStatus | Select-Object AMRunningMode, AMServiceEnabled, AntivirusEnabled, AntivirusSignatureLastUpdated, 
+        AntivirusSignatureVersion | Format-List
+    }
+    else
+    {
+        $Msg = @("", "[-] Command Get-MpComputerStatus not available!", "[-] Skipping retrieve status for antimalware software...")
+        ShowStepInfo -Msg $Msg -Color 'Red'
+    }
+
+    $CheckAVSoftCmd = CheckCommandExists -Command Get-CimInstance
+
+    if ($CheckAVSoftCmd)
+    {
+        $Msg = @("", "[+] Retrieving status for installed antivirus...")
+        ShowStepInfo -Msg $Msg -Color 'Green'
+
+        Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct | Select-Object displayName, 
+                        instanceGuid, pathToSignedProductExe, pathToSignedReportingExe, productState, timestamp | Format-List
+    }
+    else
+    {
+        $Msg = @("", "[-] Command Get-CimInstance not available!", "[-] Skipping retrieve status for installed antivirus...", "")
+        ShowStepInfo -Msg $Msg -Color 'Red'
+    }
+
 }
 
 function RunMain()
 {
-    ShowSection -Message "Start Computer Info Section" -Color 'Blue'
+    ShowSection -Message "Start Computer Info Section" -Color 'DarkYellow'
     RetrieveComputerInfo    
-    ShowSection -Message "End Computer Info Section" -Color 'Blue'
-    ShowSection -Message "Start HotFix Section" -Color 'Blue'
+    ShowSection -Message "End Computer Info Section" -Color 'DarkYellow'
+    
+    ShowSection -Message "Start HotFix Section" -Color 'DarkYellow'
     RetrieveHotFixes
-    ShowSection -Message "End HotFix Section" -Color 'Blue'
-    ShowSection -Message "Start Environment Variable Section" -Color 'Blue'
+    ShowSection -Message "End HotFix Section" -Color 'DarkYellow'
+    
+    ShowSection -Message "Start Environment Variable Section" -Color 'DarkYellow'
     RetrieveEnvVariables
-    ShowSection -Message "End Environment Variable Section" -Color 'Blue'
-    ShowSection -Message "Start Users & Groups Section" -Color 'Blue'
+    ShowSection -Message "End Environment Variable Section" -Color 'DarkYellow'
+    
+    ShowSection -Message "Start Users & Groups Section" -Color 'DarkYellow'
     RetrieveUserGroupInfo
-    ShowSection -Message "End Users & Groups Section" -Color 'Blue'
-    ShowSection -Message "Start Processes Section" -Color 'Blue'
+    ShowSection -Message "End Users & Groups Section" -Color 'DarkYellow'
+    
+    ShowSection -Message "Start Processes Section" -Color 'DarkYellow'
     RetrieveProcesses
-    ShowSection -Message "End Processes Section" -Color 'Blue'
-    ShowSection -Message "Start Services Section" -Color 'Blue'
+    ShowSection -Message "End Processes Section" -Color 'DarkYellow'
+    
+    ShowSection -Message "Start Services Section" -Color 'DarkYellow'
     RetrieveServices
-    ShowSection -Message "End Services Section" -Color 'Blue'
-    ShowSection -Message "Start Shares Section" -Color 'Blue'
+    ShowSection -Message "End Services Section" -Color 'DarkYellow'
+    
+    ShowSection -Message "Start Shares Section" -Color 'DarkYellow'
     RetrieveShares
-    ShowSection -Message "End Shares Section" -Color 'Blue'
-    ShowSection -Message "Start Software Section" -Color 'Blue'
+    ShowSection -Message "End Shares Section" -Color 'DarkYellow'
+    
+    ShowSection -Message "Start Software Section" -Color 'DarkYellow'
     RetrieveSoftware
-    ShowSection -Message "End Software Section" -Color 'Blue'
+    ShowSection -Message "End Software Section" -Color 'DarkYellow'
+    
+    ShowSection -Message "Start Scheduled Tasks Section" -Color 'DarkYellow'
+    RetrieveScheduledTasks
+    ShowSection -Message "End Scheduled Tasks Section" -Color 'DarkYellow'
+    
+    ShowSection -Message "Start AntiVirus Section" -Color 'DarkYellow'
+    RetrieveAntiVirus
+    ShowSection -Message "End AntiVirus Section" -Color 'DarkYellow'
 }
 
 RunMain
