@@ -1,4 +1,13 @@
-﻿# Check if the commands are available
+﻿function ShowHeader()
+{
+    $MainMessage = "Windows Investigator by rootshellace ©"
+    $FinalMessage = "#" + $MainMessage.PadLeft(58, " ").PadRight(78, " ") + "#"
+    Write-Host -Object ("#" * 80) -ForegroundColor Red
+    Write-Host -Object ("#" + " " * 78 + "#") -ForegroundColor Red
+    Write-Host -Object $FinalMessage -ForegroundColor Red
+    Write-Host -Object ("#" + " " * 78 + "#") -ForegroundColor Red
+    Write-Host -Object ("#" * 80) -ForegroundColor Red
+}
 
 function ShowSection([string]$Message, [string]$Color)
 {
@@ -77,372 +86,446 @@ function ShowStepInfo([array]$Msg, [string]$Color)
     }
 }
 
-<#
-function PrintTableHeader([Int32]$MaxLengthProperty, [Int32]$MaxLengthValue, [string]$Property, [string]$Value, [string]$BorderColor, [string]$RowColor)
-{
-    PrintTableBorder -MaxLengthProperty $MaxLengthProperty -MaxLengthValue $MaxLengthValue -Color $BorderColor
-    PrintTableRow -MaxLengthProperty $MaxLengthProperty -MaxLengthValue $MaxLengthValue -Property $Property -Value $Value -Color $RowColor
-    PrintTableBorder -MaxLengthProperty $MaxLengthProperty -MaxLengthValue $MaxLengthValue -Color $BorderColor
-}
-#>
 function RetrieveComputerInfo()
 {
-    $ComputerInfoCmdTest = CheckCommandExists -Command Get-ComputerInfo
+    try 
+    {
+        $ComputerInfoCmdTest = CheckCommandExists -Command Get-ComputerInfo
     
-    if ($ComputerInfoCmdTest)
-    {
-        $Msg = @("", "[+] Retrieving computer info...", "")
-        ShowStepInfo -Msg $Msg -Color 'Green'
-
-        $ComputerInfoData = Get-ComputerInfo
-        $PropertyList = @('OsName', 'OsVersion', 'OsBuildNumber', 'OsSystemDrive', 'OsWindowsDirectory', 'OsSystemDirectory', 
-                            'OsInstallDate', 'TimeZone', 'OsLocalDateTime', 'OsUptime', 'CsDNSHostname', 'CsDomain',
-                            'CsDomainRole', 'CsUserName', 'CsWorkGroup', 'LogonServer')
-        $PropertyHT = @{'OsName' = "" ; 'OsVersion' = "" ; 'OsBuildNumber' = "" ; 'OsSystemDrive' = "" ; 'OsWindowsDirectory' = "" ; 
-                        'OsSystemDirectory' = "" ; 'OsInstallDate' = "" ; 'TimeZone' = "" ; 'OsLocalDateTime' = "" ; 'OsUptime' = "" ;
-                        'CsDNSHostname' = "" ; 'CsDomain' = "" ; 'CsDomainRole' = "" ; 'CsUserName' = "" ; 'CsWorkGroup' = "" ; 
-                        'LogonServer' = ""}
-
-        foreach ($property in $PropertyList)
+        if ($ComputerInfoCmdTest)
         {
-            $PropertyHT[$property] = $ComputerInfoData.$property
+            $Msg = @("", "[+] Retrieving computer info...", "")
+            ShowStepInfo -Msg $Msg -Color 'Green'
+    
+            $ComputerInfoData = Get-ComputerInfo
+            $PropertyList = @('OsName', 'OsVersion', 'OsBuildNumber', 'OsSystemDrive', 'OsWindowsDirectory', 'OsSystemDirectory', 
+                                'OsInstallDate', 'TimeZone', 'OsLocalDateTime', 'OsUptime', 'CsDNSHostname', 'CsDomain',
+                                'CsDomainRole', 'CsUserName', 'CsWorkGroup', 'LogonServer')
+            $PropertyHT = @{'OsName' = "" ; 'OsVersion' = "" ; 'OsBuildNumber' = "" ; 'OsSystemDrive' = "" ; 'OsWindowsDirectory' = "" ; 
+                            'OsSystemDirectory' = "" ; 'OsInstallDate' = "" ; 'TimeZone' = "" ; 'OsLocalDateTime' = "" ; 'OsUptime' = "" ;
+                            'CsDNSHostname' = "" ; 'CsDomain' = "" ; 'CsDomainRole' = "" ; 'CsUserName' = "" ; 'CsWorkGroup' = "" ; 
+                            'LogonServer' = ""}
+    
+            foreach ($property in $PropertyList)
+            {
+                $PropertyHT[$property] = $ComputerInfoData.$property
+            }
+    
+            $MaxKeyLength = ($PropertyHT.Keys | Measure-Object -Maximum -Property Length).Maximum
+            $MaxValueLength = ($PropertyHT.Values | Measure-Object -Maximum -Property Length).Maximum
+    
+            PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'DarkYellow'
+            PrintTableRow -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -Property 'Property' -Value 'Value' -RowColor 'DarkYellow'
+            PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'DarkYellow'
+    
+            foreach ($property in $PropertyList)
+            {
+                PrintTableRow -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -Property $property -Value $PropertyHT[$property] -RowColor 'Yellow'
+                PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'Yellow'
+            }
+    
+            ShowStepInfo -Msg " " -Color 'Green'
         }
-
-        $MaxKeyLength = ($PropertyHT.Keys | Measure-Object -Maximum -Property Length).Maximum
-        $MaxValueLength = ($PropertyHT.Values | Measure-Object -Maximum -Property Length).Maximum
-
-        PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'DarkYellow'
-        PrintTableRow -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -Property 'Property' -Value 'Value' -RowColor 'DarkYellow'
-        PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'DarkYellow'
-
-        foreach ($property in $PropertyList)
+        else 
         {
-            PrintTableRow -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -Property $property -Value $PropertyHT[$property] -RowColor 'Yellow'
-            PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'Yellow'
+            $Msg = @("", "[-] Command Get-ComputerInfo not available!", "[-] Skipping retrieve computer info section...", "")
+            ShowStepInfo -Msg $Msg -Color 'Red'
         }
-
-        ShowStepInfo -Msg " " -Color 'Green'
     }
-    else 
+    catch 
     {
-        $Msg = @("", "[-] Command Get-ComputerInfo not available!", "[-] Skipping retrieve computer info section...", "")
-        ShowStepInfo -Msg $Msg -Color 'Red'
+        $Msg = ("", $_.Exception.Message , "")
+        ShowStepInfo -Msg $Msg -Color Red
     }
+
 }
 
 function RetrieveHotFixes()
 {
-    $HotFixCmdTest = CheckCommandExists -Command Get-HotFix
-
-    if ($HotFixCmdTest)
+    try 
     {
-        $Msg = @("", "[+] Retrieving HotFix info...", "")
-        ShowStepInfo -Msg $Msg -Color 'Green'
+        $HotFixCmdTest = CheckCommandExists -Command Get-HotFix
 
-        Get-HotFix | Select-Object Description, HotFixID, InstalledBy, InstalledOn, CsName | Sort-Object -Property InstalledOn -Descending | Format-Table
+        if ($HotFixCmdTest)
+        {
+            $Msg = @("", "[+] Retrieving HotFix info...", "")
+            ShowStepInfo -Msg $Msg -Color 'Green'
+    
+            Get-HotFix | Select-Object Description, HotFixID, InstalledBy, InstalledOn, CsName | Sort-Object -Property InstalledOn -Descending | Format-Table
+        }
+        else 
+        {
+            $Msg = @("", "[-] Command Get-HotFix not available!", "[-] Skipping retrieve HotFix section...", "")
+            ShowStepInfo -Msg $Msg -Color 'Red'
+        }
     }
-    else 
+    catch 
     {
-        $Msg = @("", "[-] Command Get-HotFix not available!", "[-] Skipping retrieve HotFix section...", "")
-        ShowStepInfo -Msg $Msg -Color 'Red'
+        $Msg = ("", $_.Exception.Message , "")
+        ShowStepInfo -Msg $Msg -Color Red
     }
+
 }
 
 function RetrieveEnvVariables()
 {
-    $EnvVarList = @('USERNAME', 'USERPROFILE')
-    $EnvVarHT = @{'USERNAME' = "" ; 'USERPROFILE' = ""}
-
-    $EnvVarHT['USERNAME'] = $Env:USERNAME
-    $EnvVarHT['USERPROFILE'] = $Env:USERPROFILE
-
-    $EnvVarBool = $false
-
-    foreach ($value_val in $EnvVarHT.Values)
+    try 
     {
-        if($value_val)
-        {
-            $EnvVarBool = $true
-            break
-        }
-    }
-
-    if ($EnvVarBool)
-    {
-        $Msg = @("", "[+] Retrieving USERNAME and USERPROFILE environment variables...", "")
-        ShowStepInfo -Msg $Msg -Color 'Green'
-
-        $MaxKeyLength = ($EnvVarHT.Keys | Measure-Object -Maximum -Property Length).Maximum
-        $MaxValueLength = ($EnvVarHT.Values | Measure-Object -Maximum -Property Length).Maximum
-
-        PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'DarkYellow'
-        PrintTableRow -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -Property 'Property' -Value 'Value' -RowColor 'DarkYellow'
-        PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'DarkYellow'
-
-        foreach ($EnvVar in $EnvVarList)
-        {
-            PrintTableRow -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -Property $EnvVar -Value $EnvVarHT[$EnvVar] -RowColor 'Yellow'
-            PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'Yellow'
-        }
-    }
-    else 
-    {
-        $Msg = @("", "[-] Could not retrieve USERNAME, USERPROFILE environment variables!")
-        ShowStepInfo -Msg $Msg -Color 'Red'
-    }
-
-    $PathDirList = $Env:Path
+        $EnvVarList = @('USERNAME', 'USERPROFILE')
+        $EnvVarHT = @{'USERNAME' = "" ; 'USERPROFILE' = ""}
     
-    if ($PathDirList)
-    {
-        $Msg = @("", "[+] Retrieving Directories in PATH...", "", "Path Directories", "----------------")
-        ShowStepInfo -Msg $Msg -Color 'Green'
-
-        foreach ($PathDir in $PathDirList.Split(';'))
+        $EnvVarHT['USERNAME'] = $Env:USERNAME
+        $EnvVarHT['USERPROFILE'] = $Env:USERPROFILE
+    
+        $EnvVarBool = $false
+    
+        foreach ($value_val in $EnvVarHT.Values)
         {
-            Write-Host -Object $PathDir
+            if($value_val)
+            {
+                $EnvVarBool = $true
+                break
+            }
         }
-
-        ShowStepInfo -Msg " " -Color 'Green'
+    
+        if ($EnvVarBool)
+        {
+            $Msg = @("", "[+] Retrieving USERNAME and USERPROFILE environment variables...", "")
+            ShowStepInfo -Msg $Msg -Color 'Green'
+    
+            $MaxKeyLength = ($EnvVarHT.Keys | Measure-Object -Maximum -Property Length).Maximum
+            $MaxValueLength = ($EnvVarHT.Values | Measure-Object -Maximum -Property Length).Maximum
+    
+            PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'DarkYellow'
+            PrintTableRow -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -Property 'Property' -Value 'Value' -RowColor 'DarkYellow'
+            PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'DarkYellow'
+    
+            foreach ($EnvVar in $EnvVarList)
+            {
+                PrintTableRow -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -Property $EnvVar -Value $EnvVarHT[$EnvVar] -RowColor 'Yellow'
+                PrintTableBorder -MaxLengthProperty $MaxKeyLength -MaxLengthValue $MaxValueLength -BorderColor 'Yellow'
+            }
+        }
+        else 
+        {
+            $Msg = @("", "[-] Could not retrieve USERNAME, USERPROFILE environment variables!")
+            ShowStepInfo -Msg $Msg -Color 'Red'
+        }
+    
+        $PathDirList = $Env:Path
+        
+        if ($PathDirList)
+        {
+            $Msg = @("", "[+] Retrieving Directories in PATH...", "", "Path Directories", "----------------")
+            ShowStepInfo -Msg $Msg -Color 'Green'
+    
+            foreach ($PathDir in $PathDirList.Split(';'))
+            {
+                Write-Host -Object $PathDir
+            }
+    
+            ShowStepInfo -Msg " " -Color 'Green'
+        }
+        else 
+        {
+            $Msg = @("", "[-] Could not retrieve Path directories!", "")
+            ShowStepInfo -Msg $Msg -Color 'Red'
+        }
     }
-    else 
+    catch 
     {
-        $Msg = @("", "[-] Could not retrieve Path directories!", "")
-        ShowStepInfo -Msg $Msg -Color 'Red'
+        $Msg = ("", $_.Exception.Message , "")
+        ShowStepInfo -Msg $Msg -Color Red
     }
+
 }
 
 function RetrieveUserGroupInfo()
 {
-    $UserCmdTest = CheckCommandExists -Command Get-LocalUser
-
-    if ($UserCmdTest)
+    try 
     {
-        $Msg = @("", "[+] Retrieving list of users...")
-        ShowStepInfo -Msg $Msg -Color 'Green'
+        $UserCmdTest = CheckCommandExists -Command Get-LocalUser
 
-        Get-LocalUser | Select-Object Name, Enabled, LastLogon, AccountExpires, PasswordRequired, PasswordLastSet, PasswordExpires | Format-Table
-    }
-    else 
-    {
-        $Msg = @("", "[-] Command Get-LocalUser not available!", "[-] Skipping retrieve users info section...", "")
-        ShowStepInfo -Msg $Msg -Color 'Red'
-    }
-
-    $GroupCmdTest = CheckCommandExists -Command Get-LocalGroup
-
-    if ($GroupCmdTest)
-    {
-        $Msg = @("[+] Retrieving list of groups...")
-        ShowStepInfo -Msg $Msg -Color 'Green'
-
-        Get-LocalGroup | Select-Object Name, ObjectClass, PrincipalSource, SID | Format-Table
-    }
-    else
-    {
-        $Msg = @("[-] Command Get-LocalGroup not available!", "[-] Skipping retrieve groups info section...", "")
-        ShowStepInfo -Msg $Msg -Color 'Red'
-    }
-
-    $GroupMemberCmdTest = CheckCommandExists -Command Get-LocalGroupMember
-
-    if ($GroupMemberCmdTest)
-    {
-        $Msg = @("[+] Retrieving list of groups where current user is member...", "")
-        ShowStepInfo -Msg $Msg -Color 'Green'
-
-        $GroupList = Get-LocalGroup
-
-        foreach ($Group in $GroupList)
+        if ($UserCmdTest)
         {
-            if (Get-LocalGroupMember -Name $Group -Member $Env:USERNAME -ErrorAction SilentlyContinue)
-            {
-                Write-Host -Object $Group -ForegroundColor 'Yellow'
-            }
+            $Msg = @("", "[+] Retrieving list of users...")
+            ShowStepInfo -Msg $Msg -Color 'Green'
+    
+            Get-LocalUser | Select-Object Name, Enabled, LastLogon, AccountExpires, PasswordRequired, PasswordLastSet, PasswordExpires | Format-Table
         }
-
-        $Msg = @("", "[+] Retrieving list of members for Administrator group...")
-        ShowStepInfo -Msg $Msg -Color 'Green'
-
-        $AdminGroup = 'Administrators'
-        Get-LocalGroupMember -Group $AdminGroup -ErrorAction SilentlyContinue | Select-Object ObjectClass, Name, PrincipalSource, SID | Format-Table
+        else 
+        {
+            $Msg = @("", "[-] Command Get-LocalUser not available!", "[-] Skipping retrieve users info section...", "")
+            ShowStepInfo -Msg $Msg -Color 'Red'
+        }
+    
+        $GroupCmdTest = CheckCommandExists -Command Get-LocalGroup
+    
+        if ($GroupCmdTest)
+        {
+            $Msg = @("[+] Retrieving list of groups...")
+            ShowStepInfo -Msg $Msg -Color 'Green'
+    
+            Get-LocalGroup | Select-Object Name, ObjectClass, PrincipalSource, SID | Format-Table
+        }
+        else
+        {
+            $Msg = @("[-] Command Get-LocalGroup not available!", "[-] Skipping retrieve groups info section...", "")
+            ShowStepInfo -Msg $Msg -Color 'Red'
+        }
+    
+        $GroupMemberCmdTest = CheckCommandExists -Command Get-LocalGroupMember
+    
+        if ($GroupMemberCmdTest)
+        {
+            $Msg = @("[+] Retrieving list of groups where current user is member...", "")
+            ShowStepInfo -Msg $Msg -Color 'Green'
+    
+            $GroupList = Get-LocalGroup
+    
+            foreach ($Group in $GroupList)
+            {
+                if (Get-LocalGroupMember -Name $Group -Member $Env:USERNAME -ErrorAction SilentlyContinue)
+                {
+                    Write-Host -Object $Group -ForegroundColor 'Yellow'
+                }
+            }
+    
+            $Msg = @("", "[+] Retrieving list of members for Administrator group...")
+            ShowStepInfo -Msg $Msg -Color 'Green'
+    
+            $AdminGroup = 'Administrators'
+            Get-LocalGroupMember -Group $AdminGroup -ErrorAction SilentlyContinue | Select-Object ObjectClass, Name, PrincipalSource, SID | Format-Table
+        }
+        else
+        {
+            $Msg = @("[-] Command Get-LocalGroupMember not available!", "[-] Skipping retrieve groups where current user is member info section...", "")
+            ShowStepInfo -Msg $Msg -Color 'Red'
+        }
+    
+        $WhoAmICmdTest = CheckCommandExists -Command whoami
+    
+        if ($WhoAmICmdTest)
+        {
+            $Msg = @("[+] Retrieving list of privileges for current user...")
+            ShowStepInfo -Msg $Msg -Color 'Green'
+    
+            whoami /priv
+    
+            ShowStepInfo -Msg " " -Color 'Green'
+        }
+        else
+        {
+            $Msg = @("[-] Command whoami not available!", "[-] Skipping retrieve privileges for current user info section...", "")
+            ShowStepInfo -Msg $Msg -Color 'Red'
+        }
     }
-    else
+    catch 
     {
-        $Msg = @("[-] Command Get-LocalGroupMember not available!", "[-] Skipping retrieve groups where current user is member info section...", "")
-        ShowStepInfo -Msg $Msg -Color 'Red'
+        $Msg = ("", $_.Exception.Message , "")
+        ShowStepInfo -Msg $Msg -Color Red
     }
 
-    $WhoAmICmdTest = CheckCommandExists -Command whoami
-
-    if ($WhoAmICmdTest)
-    {
-        $Msg = @("[+] Retrieving list of privileges for current user...")
-        ShowStepInfo -Msg $Msg -Color 'Green'
-
-        whoami /priv
-
-        ShowStepInfo -Msg " " -Color 'Green'
-    }
-    else
-    {
-        $Msg = @("[-] Command whoami not available!", "[-] Skipping retrieve privileges for current user info section...", "")
-        ShowStepInfo -Msg $Msg -Color 'Red'
-    }
 }
 
 function RetrieveProcesses()
 {
-    $GetProcessCmd = CheckCommandExists -Command Get-Process
-
-    if ($GetProcessCmd)
+    try 
     {
-        $Msg = @("", "[+] Retrieving list of running processes...")
-        ShowStepInfo -Msg $Msg -Color 'Green'
+        $GetProcessCmd = CheckCommandExists -Command Get-Process
 
-        Get-Process | Select-Object Id, Name, Path | Format-Table
+        if ($GetProcessCmd)
+        {
+            $Msg = @("", "[+] Retrieving list of running processes...")
+            ShowStepInfo -Msg $Msg -Color 'Green'
+    
+            Get-Process | Select-Object Id, Name, Path | Format-Table
+        }
+        else 
+        {
+            $Msg = @("", "[-] Command Get-Process not available!", "[-] Skipping retrieve list of running processes info section...", "")
+            ShowStepInfo -Msg $Msg -Color 'Red'
+        }        
     }
-    else 
+    catch 
     {
-        $Msg = @("", "[-] Command Get-Process not available!", "[-] Skipping retrieve list of running processes info section...", "")
-        ShowStepInfo -Msg $Msg -Color 'Red'
+        $Msg = ("", $_.Exception.Message , "")
+        ShowStepInfo -Msg $Msg -Color Red
     }
+
 }
 
 function RetrieveServices()
 {
-    $GetServiceCmd = CheckCommandExists -Command Get-Service
-
-    if ($GetServiceCmd)
+    try 
     {
-        $Msg = @("", "[+] Retrieving list of running services...")
-        ShowStepInfo -Msg $Msg -Color 'Green'
+        $GetServiceCmd = CheckCommandExists -Command Get-Service
 
-        Get-Service | Where-Object { $_.Status -eq 'Running' } | Select-Object Name, DisplayName, Status, StartType, CanStop | Format-Table
+        if ($GetServiceCmd)
+        {
+            $Msg = @("", "[+] Retrieving list of running services...")
+            ShowStepInfo -Msg $Msg -Color 'Green'
+    
+            Get-Service | Where-Object { $_.Status -eq 'Running' } | Select-Object Name, DisplayName, Status, StartType, CanStop | Format-Table
+        }
+        else
+        {
+            $Msg = @("", "[-] Command Get-Service not available!", "[-] Skipping retrieve list of running services info section...", "")
+            ShowStepInfo -Msg $Msg -Color 'Red'
+        }        
     }
-    else
+    catch 
     {
-        $Msg = @("", "[-] Command Get-Service not available!", "[-] Skipping retrieve list of running services info section...", "")
-        ShowStepInfo -Msg $Msg -Color 'Red'
+        $Msg = ("", $_.Exception.Message , "")
+        ShowStepInfo -Msg $Msg -Color Red
     }
+
 }
 
 function RetrieveShares()
 {
-    $GetSharesCmd = CheckCommandExists -Command Get-SmbShare
-
-    if ($GetSharesCmd)
+    try 
     {
-        $Msg = @("", "[+] Retrieving list of shares...")
-        ShowStepInfo -Msg $Msg -Color 'Green'
+        $GetSharesCmd = CheckCommandExists -Command Get-SmbShare
 
-        Get-SmbShare | Select-Object Name, ScopeName, Path, Description, CurrentUsers | Format-Table
+        if ($GetSharesCmd)
+        {
+            $Msg = @("", "[+] Retrieving list of shares...")
+            ShowStepInfo -Msg $Msg -Color 'Green'
+    
+            Get-SmbShare | Select-Object Name, ScopeName, Path, Description, CurrentUsers | Format-Table
+        }
+        else
+        {
+            $Msg = @("", "[-] Command Get-SmbShare not available!", "[-] Skipping retrieve list of shares info section...", "")
+            ShowStepInfo -Msg $Msg -Color 'Red'
+        }
     }
-    else
+    catch 
     {
-        $Msg = @("", "[-] Command Get-SmbShare not available!", "[-] Skipping retrieve list of shares info section...", "")
-        ShowStepInfo -Msg $Msg -Color 'Red'
+        $Msg = ("", $_.Exception.Message , "")
+        ShowStepInfo -Msg $Msg -Color Red
     }
+
 }
 
 function RetrieveSoftware()
 {
-    $CheckSoftwareCmd = CheckCommandExists -Command Get-WmiObject
-
-    if ($CheckSoftwareCmd)
+    try 
     {
-        $Msg = @("", "[+] Retrieving list of software...")
-        ShowStepInfo -Msg $Msg -Color 'Green'
+        $CheckSoftwareCmd = CheckCommandExists -Command Get-WmiObject
 
-        #Write-Host -Object ""
-        #Write-Host -Object "[+] Retrieving list of software..."
-        #Write-Host -Object ""
-
-        Get-WmiObject -Class Win32_Product | Select-Object Name, Version, InstallDate, InstallLocation, Vendor | Format-Table
+        if ($CheckSoftwareCmd)
+        {
+            $Msg = @("", "[+] Retrieving list of software...")
+            ShowStepInfo -Msg $Msg -Color 'Green'
+    
+            Get-WmiObject -Class Win32_Product | Select-Object Name, Version, InstallDate, InstallLocation, Vendor | Format-Table
+        }
+        else
+        {
+            $Msg = @("", "[-] Command Get-WmiObject not available!", "[-] Skipping retrieve list of software info section...", "")
+            ShowStepInfo -Msg $Msg -Color 'Red'
+        }
     }
-    else
+    catch 
     {
-        $Msg = @("", "[-] Command Get-WmiObject not available!", "[-] Skipping retrieve list of software info section...", "")
-        ShowStepInfo -Msg $Msg -Color 'Red'
-
-        #Write-Host -Object ""
-        #Write-Host -Object "[-] Command Get-WmiObject not available!"
-        #Write-Host -Object "[-] Skipping retrieve list of software info section..."
-        #Write-Host -Object ""
+        $Msg = ("", $_.Exception.Message , "")
+        ShowStepInfo -Msg $Msg -Color Red
     }
+
 }
 
 function RetrieveScheduledTasks()
 {
-    $CheckScheduledTasksCmd = CheckCommandExists -Command Get-ScheduledTask
-
-    if ($CheckScheduledTasksCmd)
+    try 
     {
-        $Msg = @("", "[+] Retrieving list of available scheduled tasks...", "[+] Excluded the tasks from Microsoft Path")
-        ShowStepInfo -Msg $Msg -Color 'Green'
+        $CheckScheduledTasksCmd = CheckCommandExists -Command Get-ScheduledTask
 
-        Get-ScheduledTask | Where-Object { $_.TaskPath -notlike '*Microsoft*' } | Select-Object TaskName, TaskPath, State | Format-Table
+        if ($CheckScheduledTasksCmd)
+        {
+            $Msg = @("", "[+] Retrieving list of available scheduled tasks...", "[+] Excluded the tasks from Microsoft Path")
+            ShowStepInfo -Msg $Msg -Color 'Green'
+    
+            Get-ScheduledTask | Where-Object { $_.TaskPath -notlike '*Microsoft*' } | Select-Object TaskName, TaskPath, State | Format-Table
+        }
+        else
+        {
+            $Msg = @("", "[-] Command Get-ScheduledTask not available!", "[-] Skipping retrieve list of available scheduled tasks...", "")
+            ShowStepInfo -Msg $Msg -Color 'Red'
+        }
     }
-    else
+    catch 
     {
-        $Msg = @("", "[-] Command Get-ScheduledTask not available!", "[-] Skipping retrieve list of available scheduled tasks...", "")
-        ShowStepInfo -Msg $Msg -Color 'Red'
+        $Msg = ("", $_.Exception.Message , "")
+        ShowStepInfo -Msg $Msg -Color Red
     }
+
 }
 
 function RetrieveAntiVirus()
 {
-    $CheckServiceCmd = CheckCommandExists -Command Get-Service
-
-    if ($CheckServiceCmd)
+    try 
     {
-        $Msg = @("", "[+] Retrieving status for Microsoft Defender...")
-        ShowStepInfo -Msg $Msg -Color 'Green'
+        $CheckServiceCmd = CheckCommandExists -Command Get-Service
 
-        Get-Service -Name WinDefend | Select-Object Status, Name, DisplayName | Format-Table
+        if ($CheckServiceCmd)
+        {
+            $Msg = @("", "[+] Retrieving status for Microsoft Defender...")
+            ShowStepInfo -Msg $Msg -Color 'Green'
+    
+            Get-Service -Name WinDefend | Select-Object Status, Name, DisplayName | Format-Table
+        }
+        else
+        {
+            $Msg = @("", "[-] Command Get-Service not available!", "[-] Skipping retrieve status for Microsoft Defender...")
+            ShowStepInfo -Msg $Msg -Color 'Red'
+        }
+    
+        $CheckAMCmd = CheckCommandExists -Command Get-MpComputerStatus
+    
+        if ($CheckAMCmd)
+        {
+            $Msg = @("", "[+] Retrieving status for antimalware software...")
+            ShowStepInfo -Msg $Msg -Color 'Green'
+    
+            Get-MpComputerStatus | Select-Object AMRunningMode, AMServiceEnabled, AntivirusEnabled, AntivirusSignatureLastUpdated, 
+            AntivirusSignatureVersion | Format-List
+        }
+        else
+        {
+            $Msg = @("", "[-] Command Get-MpComputerStatus not available!", "[-] Skipping retrieve status for antimalware software...")
+            ShowStepInfo -Msg $Msg -Color 'Red'
+        }
+    
+        $CheckAVSoftCmd = CheckCommandExists -Command Get-CimInstance
+    
+        if ($CheckAVSoftCmd)
+        {
+            $Msg = @("", "[+] Retrieving status for installed antivirus...")
+            ShowStepInfo -Msg $Msg -Color 'Green'
+    
+            Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct | Select-Object displayName, 
+                            instanceGuid, pathToSignedProductExe, pathToSignedReportingExe, productState, timestamp | Format-List
+        }
+        else
+        {
+            $Msg = @("", "[-] Command Get-CimInstance not available!", "[-] Skipping retrieve status for installed antivirus...", "")
+            ShowStepInfo -Msg $Msg -Color 'Red'
+        }       
     }
-    else
+    catch 
     {
-        $Msg = @("", "[-] Command Get-Service not available!", "[-] Skipping retrieve status for Microsoft Defender...")
-        ShowStepInfo -Msg $Msg -Color 'Red'
-    }
-
-    $CheckAMCmd = CheckCommandExists -Command Get-MpComputerStatus
-
-    if ($CheckAMCmd)
-    {
-        $Msg = @("", "[+] Retrieving status for antimalware software...")
-        ShowStepInfo -Msg $Msg -Color 'Green'
-
-        Get-MpComputerStatus | Select-Object AMRunningMode, AMServiceEnabled, AntivirusEnabled, AntivirusSignatureLastUpdated, 
-        AntivirusSignatureVersion | Format-List
-    }
-    else
-    {
-        $Msg = @("", "[-] Command Get-MpComputerStatus not available!", "[-] Skipping retrieve status for antimalware software...")
-        ShowStepInfo -Msg $Msg -Color 'Red'
-    }
-
-    $CheckAVSoftCmd = CheckCommandExists -Command Get-CimInstance
-
-    if ($CheckAVSoftCmd)
-    {
-        $Msg = @("", "[+] Retrieving status for installed antivirus...")
-        ShowStepInfo -Msg $Msg -Color 'Green'
-
-        Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct | Select-Object displayName, 
-                        instanceGuid, pathToSignedProductExe, pathToSignedReportingExe, productState, timestamp | Format-List
-    }
-    else
-    {
-        $Msg = @("", "[-] Command Get-CimInstance not available!", "[-] Skipping retrieve status for installed antivirus...", "")
-        ShowStepInfo -Msg $Msg -Color 'Red'
+        $Msg = ("", $_.Exception.Message , "")
+        ShowStepInfo -Msg $Msg -Color Red
     }
 
 }
 
 function RunMain()
 {
+    ShowHeader
+    
     ShowSection -Message "Start Computer Info Section" -Color 'DarkYellow'
     RetrieveComputerInfo    
     ShowSection -Message "End Computer Info Section" -Color 'DarkYellow'
@@ -481,7 +564,7 @@ function RunMain()
     
     ShowSection -Message "Start AntiVirus Section" -Color 'DarkYellow'
     RetrieveAntiVirus
-    ShowSection -Message "End AntiVirus Section" -Color 'DarkYellow'
+    ShowSection -Message "End AntiVirus Section" -Color 'DarkYellow' 
 }
 
 RunMain
